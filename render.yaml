@@ -1,0 +1,20 @@
+services:
+  # تكوين خدمة الويب
+  - type: web
+    name: file-management-system
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+    
+    # إعدادات النسخ الاحتياطي للملفات المرفوعة
+    disk:
+      name: uploads
+      mountPath: /opt/render/project/src/uploads
+      sizeGB: 10
