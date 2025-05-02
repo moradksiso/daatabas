@@ -1,5 +1,6 @@
 import os
 import uuid
+import secrets
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, session, g
@@ -10,18 +11,28 @@ from models import db, File, User, ActivityLog
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# تعيين مفتاح سري قوي للجلسة
+app.secret_key = secrets.token_hex(32)
+
 # تهيئة قاعدة البيانات
 db.init_app(app)
 
 # تهيئة الجلسة
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_PERMANENT'] = False
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # جلسة تستمر لمدة أسبوع
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_FILE_DIR'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'flask_session')
+app.config['SESSION_COOKIE_SECURE'] = False  # تعيين إلى True في بيئة الإنتاج مع HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # إنشاء مجلد الجلسات إذا لم يكن موجودًا
 os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+
+# طباعة معلومات تصحيح الأخطاء
+print(f"مجلد الجلسات: {app.config['SESSION_FILE_DIR']}")
+print(f"مفتاح الجلسة السري: {app.secret_key[:10]}...")
 
 # تهيئة التطبيق
 Config.init_app(app)
@@ -143,13 +154,28 @@ def load_logged_in_user():
     """تحميل معلومات المستخدم قبل كل طلب"""
     user_id = session.get('user_id')
 
+    # طباعة معلومات تصحيح الأخطاء
+    print(f"محاولة تحميل المستخدم من الجلسة. معرف المستخدم: {user_id}")
+    print(f"محتوى الجلسة: {session}")
+
     if user_id is None:
         g.user = None
+        print("لا يوجد معرف مستخدم في الجلسة")
     else:
-        g.user = User.query.get(user_id)
-        if g.user is None:
-            # إذا لم يتم العثور على المستخدم، مسح الجلسة
+        try:
+            g.user = User.query.get(user_id)
+            if g.user:
+                print(f"تم تحميل المستخدم بنجاح: {g.user.username} (ID: {g.user.id})")
+            else:
+                print(f"لم يتم العثور على المستخدم بالمعرف: {user_id}")
+                # إذا لم يتم العثور على المستخدم، مسح الجلسة
+                session.clear()
+                print("تم مسح الجلسة")
+        except Exception as e:
+            print(f"خطأ في تحميل المستخدم: {str(e)}")
+            g.user = None
             session.clear()
+            print("تم مسح الجلسة بسبب خطأ")
 
 @app.route('/')
 def index():
@@ -426,12 +452,15 @@ def delete_file(file_id):
 def login():
     """صفحة تسجيل الدخول"""
     # إذا كان المستخدم مسجل دخوله بالفعل، توجيهه إلى الصفحة الرئيسية
-    if g.user:
+    if 'user_id' in session:
         return redirect(url_for('index'))
 
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+
+        # طباعة معلومات تصحيح الأخطاء
+        print(f"محاولة تسجيل دخول: {username}")
 
         # التحقق من إدخال اسم المستخدم وكلمة المرور
         if not username or not password:
@@ -441,26 +470,43 @@ def login():
         # البحث عن المستخدم في قاعدة البيانات
         user = User.query.filter_by(username=username).first()
 
+        # طباعة معلومات تصحيح الأخطاء
+        print(f"تم العثور على المستخدم: {user is not None}")
+
         # التحقق من صحة كلمة المرور
         if user and user.check_password(password):
+            # طباعة معلومات تصحيح الأخطاء
+            print(f"كلمة المرور صحيحة للمستخدم: {username}")
+
             # التحقق من أن الحساب نشط
             if not user.is_active:
                 flash('تم تعطيل حسابك. يرجى التواصل مع المشرف', 'error')
                 return render_template('login.html')
 
             # تخزين معرف المستخدم في الجلسة
+            session.clear()
             session['user_id'] = user.id
+
+            # طباعة معلومات تصحيح الأخطاء
+            print(f"تم تخزين معرف المستخدم في الجلسة: {user.id}")
+            print(f"محتوى الجلسة: {session}")
 
             # تحديث تاريخ آخر تسجيل دخول
             user.last_login = datetime.now(timezone.utc)
             db.session.commit()
 
-            # تسجيل نشاط تسجيل الدخول
-            log_activity('تسجيل دخول', f'تم تسجيل دخول المستخدم {user.username}', user.id)
+            try:
+                # تسجيل نشاط تسجيل الدخول
+                log_activity('تسجيل دخول', f'تم تسجيل دخول المستخدم {user.username}', user.id)
+            except Exception as e:
+                print(f"خطأ في تسجيل النشاط: {str(e)}")
 
             flash(f'مرحبًا {user.username}! تم تسجيل دخولك بنجاح', 'success')
             return redirect(url_for('index'))
         else:
+            # طباعة معلومات تصحيح الأخطاء
+            print(f"كلمة المرور غير صحيحة للمستخدم: {username}")
+
             # رسالة خطأ في حالة عدم صحة اسم المستخدم أو كلمة المرور
             flash('اسم المستخدم أو كلمة المرور غير صحيحة', 'error')
 
