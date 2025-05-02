@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام إدارة الملفات{% endblock %}</title>
+    <!-- Bootstrap RTL CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts - Tajawal & Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- AOS Animation Library -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <!-- Additional CSS -->
+    {% block additional_css %}{% endblock %}
+</head>
+<body>
+    <!-- شريط التنقل -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}" data-aos="fade-right">
+                <i class="bi bi-folder2-open me-2"></i>نظام إدارة الملفات
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item" data-aos="fade-down" data-aos-delay="100">
+                        <a class="nav-link {{ 'active' if request.path == url_for('index') }}" href="{{ url_for('index') }}">
+                            <i class="bi bi-house-door me-1"></i> الرئيسية
+                        </a>
+                    </li>
+                    {% if g.user %}
+                    <li class="nav-item" data-aos="fade-down" data-aos-delay="200">
+                        <a class="nav-link {{ 'active' if request.path == url_for('explore_files') }}" href="{{ url_for('explore_files') }}">
+                            <i class="bi bi-search me-1"></i> استكشاف الملفات
+                        </a>
+                    </li>
+                    <li class="nav-item" data-aos="fade-down" data-aos-delay="300">
+                        <a class="nav-link {{ 'active' if request.path == url_for('my_files') }}" href="{{ url_for('my_files') }}">
+                            <i class="bi bi-folder me-1"></i> ملفاتي
+                        </a>
+                    </li>
+                    <li class="nav-item" data-aos="fade-down" data-aos-delay="400">
+                        <a class="nav-link {{ 'active' if request.path == url_for('upload_file') }}" href="{{ url_for('upload_file') }}">
+                            <i class="bi bi-upload me-1"></i> رفع ملف
+                        </a>
+                    </li>
+                    {% if g.user.is_admin %}
+                    <li class="nav-item" data-aos="fade-down" data-aos-delay="500">
+                        <a class="nav-link {{ 'active' if '/admin' in request.path }}" href="{{ url_for('admin_dashboard') }}">
+                            <i class="bi bi-speedometer2 me-1"></i> لوحة التحكم
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if g.user %}
+                    <li class="nav-item dropdown" data-aos="fade-left">
+                        <button class="nav-link dropdown-toggle user-dropdown" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-1"></i> {{ g.user.username }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="bi bi-person me-2"></i>الملف الشخصي</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-2"></i>تسجيل الخروج</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item" data-aos="fade-left">
+                        <a class="nav-link btn btn-primary btn-sm text-white px-3 ms-2" href="{{ url_for('login') }}">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> تسجيل الدخول
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- محتوى الصفحة -->
+    <main class="main-content">
+        <div class="container">
+            <!-- رسائل التنبيه -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages" data-aos="fade-down">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show">
+                                {% if category == 'success' %}
+                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                {% elif category == 'error' or category == 'danger' %}
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                {% elif category == 'warning' %}
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                {% else %}
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                {% endif %}
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- المحتوى الرئيسي -->
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- تذييل الصفحة -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3"><i class="bi bi-folder2-open me-2"></i>نظام إدارة الملفات</h5>
+                    <p class="mb-0">منصة متكاملة لإدارة وتنظيم ومشاركة الملفات بطريقة آمنة وسهلة.</p>
+                </div>
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3">روابط سريعة</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('index') }}"><i class="bi bi-chevron-left me-1"></i>الرئيسية</a></li>
+                        {% if g.user %}
+                        <li><a href="{{ url_for('explore_files') }}"><i class="bi bi-chevron-left me-1"></i>استكشاف الملفات</a></li>
+                        <li><a href="{{ url_for('my_files') }}"><i class="bi bi-chevron-left me-1"></i>ملفاتي</a></li>
+                        <li><a href="{{ url_for('upload_file') }}"><i class="bi bi-chevron-left me-1"></i>رفع ملف</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-3">معلومات التواصل</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-envelope-fill me-2"></i>البريد الإلكتروني: ksiso.morad@hotmail.com</li>
+                        <li><i class="bi bi-telephone-fill me-2"></i>الهاتف: +212630913526</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="mb-0">جميع الحقوق محفوظة &copy; <span id="current-year"></span> نظام إدارة الملفات</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- سكريبت Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- AOS Animation Library -->
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // تهيئة مكتبة AOS للتحريكات
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+
+        // تعيين السنة الحالية في تذييل الصفحة
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+    <!-- Additional Scripts -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

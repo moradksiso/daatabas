@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ file.original_filename }} - نظام إدارة الملفات{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card" data-aos="fade-up">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">تفاصيل الملف</h3>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="file-icon display-1 mb-3">
+                        {% if file.is_image %}
+                            <i class="bi bi-file-image text-primary"></i>
+                            <span class="badge bg-primary">صورة</span>
+                        {% elif file.file_type == 'application/pdf' %}
+                            <i class="bi bi-file-pdf text-danger"></i>
+                            <span class="badge bg-danger">PDF</span>
+                        {% elif file.is_document %}
+                            <i class="bi bi-file-word text-primary"></i>
+                            <span class="badge bg-primary">Word</span>
+                        {% elif file.is_spreadsheet %}
+                            <i class="bi bi-file-excel text-success"></i>
+                            <span class="badge bg-success">Excel</span>
+                        {% elif file.is_text %}
+                            <i class="bi bi-file-text text-info"></i>
+                            <span class="badge bg-info">نص</span>
+                        {% else %}
+                            <i class="bi bi-file-earmark text-secondary"></i>
+                            <span class="badge bg-secondary">ملف</span>
+                        {% endif %}
+                    </div>
+                    <h2 class="mb-2">{% if file.title %}{{ file.title }}{% else %}{{ file.original_filename }}{% endif %}</h2>
+                    <p class="text-muted mb-3">{{ file.original_filename }}</p>
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-hdd"></i> {{ file.size_in_kb }} كيلوبايت
+                        </span>
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-calendar"></i> {{ file.formatted_date }}
+                        </span>
+                        {% if file.user %}
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-person"></i> {{ file.user.username }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th style="width: 30%">معرف الملف</th>
+                            <td>{{ file.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>الاسم الأصلي</th>
+                            <td>{{ file.original_filename }}</td>
+                        </tr>
+                        <tr>
+                            <th>نوع الملف</th>
+                            <td>{{ file.file_type }}</td>
+                        </tr>
+                        <tr>
+                            <th>حجم الملف</th>
+                            <td>{{ file.size_in_kb }} كيلوبايت</td>
+                        </tr>
+                        <tr>
+                            <th>تاريخ الرفع</th>
+                            <td>{{ file.formatted_date }}</td>
+                        </tr>
+                        {% if file.title %}
+                        <tr>
+                            <th>عنوان الملف</th>
+                            <td>{{ file.title }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if file.description %}
+                        <tr>
+                            <th>الوصف</th>
+                            <td>{{ file.description }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+
+                {% if file.is_image %}
+                <div class="text-center my-4" data-aos="fade-up">
+                    <h4 class="mb-3">معاينة الصورة</h4>
+                    <div class="image-preview-container">
+                        <img src="{{ url_for('download_file', file_id=file.id) }}" class="img-fluid rounded shadow" alt="{{ file.original_filename }}">
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn btn-success">
+                        <i class="bi bi-download"></i> تنزيل الملف
+                    </a>
+
+                    {% if g.user and (g.user.is_admin or file.user_id == g.user.id) %}
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="bi bi-trash"></i> حذف الملف
+                    </button>
+                    {% endif %}
+
+                    <div class="btn-group">
+                        {% if request.referrer and 'my-files' in request.referrer %}
+                        <a href="{{ url_for('my_files') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-right"></i> العودة إلى ملفاتي
+                        </a>
+                        {% elif request.referrer and 'explore' in request.referrer %}
+                        <a href="{{ url_for('explore_files') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-right"></i> العودة إلى استكشاف الملفات
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-right"></i> العودة إلى الرئيسية
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة تأكيد الحذف -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                هل أنت متأكد من حذف الملف "{{ file.original_filename }}"؟
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form action="{{ url_for('delete_file', file_id=file.id) }}" method="post">
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

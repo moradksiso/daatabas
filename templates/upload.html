@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}رفع ملف جديد - نظام إدارة الملفات{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">رفع ملف جديد</h3>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">اختر الملف</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="file" name="file" required>
+                            <span class="input-group-text"><i class="bi bi-file-earmark"></i></span>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge bg-info text-dark me-1">
+                                <i class="bi bi-info-circle"></i> الأنواع المسموح بها:
+                                {% for ext in config['ALLOWED_EXTENSIONS'] %}
+                                    .{{ ext }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </span>
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-exclamation-triangle"></i> الحد الأقصى: {{ config['MAX_CONTENT_LENGTH'] / (1024 * 1024) }} ميجابايت
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">عنوان الملف</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="title" name="title" required>
+                            <span class="input-group-text"><i class="bi bi-tag"></i></span>
+                        </div>
+                        <div class="form-text">أدخل عنوانًا وصفيًا للملف يسهل التعرف عليه</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">وصف الملف (اختياري)</label>
+                        <div class="input-group">
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                        </div>
+                        <div class="form-text">يمكنك إضافة وصف تفصيلي للملف</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-upload"></i> رفع الملف
+                        </button>
+
+                        <div class="btn-group">
+                            {% if request.referrer and 'my-files' in request.referrer %}
+                            <a href="{{ url_for('my_files') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-right"></i> العودة إلى ملفاتي
+                            </a>
+                            {% elif request.referrer and 'explore' in request.referrer %}
+                            <a href="{{ url_for('explore_files') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-right"></i> العودة إلى استكشاف الملفات
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-right"></i> العودة إلى الرئيسية
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('file');
+        const titleInput = document.getElementById('title');
+        const form = document.querySelector('form');
+        const maxSize = {{ config['MAX_CONTENT_LENGTH'] }}; // Removed trailing comma
+        const allowedExtensions = {{ config['ALLOWED_EXTENSIONS']|list|tojson }}; // Removed trailing comma
+
+        // عند اختيار ملف، اقتراح عنوان تلقائي
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length > 0) {
+                const fileName = fileInput.files[0].name;
+                // استخراج اسم الملف بدون الامتداد
+                const fileNameWithoutExt = fileName.split('.').slice(0, -1).join('.');
+
+                // اقتراح العنوان فقط إذا كان حقل العنوان فارغًا
+                if (!titleInput.value) {
+                    titleInput.value = fileNameWithoutExt;
+                }
+
+                // التحقق من حجم الملف
+                const fileSize = fileInput.files[0].size;
+                if (fileSize > maxSize) {
+                    showAlert('حجم الملف كبير جدًا. الحد الأقصى المسموح به هو {{ config["MAX_CONTENT_LENGTH"] / (1024 * 1024) }} ميجابايت.', 'danger');
+                    fileInput.value = ''; // إفراغ حقل الملف
+                    return;
+                }
+
+                // التحقق من امتداد الملف
+                const fileExt = fileName.split('.').pop().toLowerCase();
+                if (!allowedExtensions.includes(fileExt)) {
+                    showAlert('نوع الملف غير مسموح به. الأنواع المسموح بها هي: ' + allowedExtensions.join(', '), 'danger');
+                    fileInput.value = ''; // إفراغ حقل الملف
+                    return;
+                }
+
+                showAlert('تم اختيار الملف بنجاح: ' + fileName, 'success');
+            }
+        });
+
+        // التحقق من الحقول قبل الإرسال
+        form.addEventListener('submit', function(e) {
+            if (fileInput.files.length === 0) {
+                e.preventDefault();
+                showAlert('يرجى اختيار ملف للرفع', 'danger');
+                return;
+            }
+
+            if (!titleInput.value.trim()) {
+                e.preventDefault();
+                showAlert('يرجى إدخال عنوان للملف', 'danger');
+                return;
+            }
+
+            // التحقق من حجم الملف مرة أخرى
+            const fileSize = fileInput.files[0].size;
+            if (fileSize > maxSize) {
+                e.preventDefault();
+                showAlert('حجم الملف كبير جدًا. الحد الأقصى المسموح به هو {{ config["MAX_CONTENT_LENGTH"] / (1024 * 1024) }} ميجابايت.', 'danger');
+                return;
+            }
+        });
+
+        // دالة لعرض رسائل التنبيه
+        function showAlert(message, type) {
+            // إزالة أي تنبيهات سابقة
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+
+            // إنشاء عنصر التنبيه
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.role = 'alert';
+
+            // إضافة أيقونة مناسبة
+            let icon = '';
+            if (type === 'success') {
+                icon = '<i class="bi bi-check-circle-fill me-2"></i>';
+            } else if (type === 'danger') {
+                icon = '<i class="bi bi-exclamation-triangle-fill me-2"></i>';
+            } else if (type === 'warning') {
+                icon = '<i class="bi bi-exclamation-circle-fill me-2"></i>';
+            } else if (type === 'info') {
+                icon = '<i class="bi bi-info-circle-fill me-2"></i>';
+            }
+
+            alertDiv.innerHTML = `
+                ${icon}${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+            // إضافة التنبيه إلى بداية النموذج
+            form.parentNode.insertBefore(alertDiv, form);
+
+            // إخفاء التنبيه تلقائيًا بعد 5 ثوانٍ
+            setTimeout(() => {
+                alertDiv.classList.remove('show');
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 5000);
+        }
+    }); // Close the DOMContentLoaded event listener
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

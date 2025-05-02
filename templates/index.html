@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}الصفحة الرئيسية - نظام إدارة الملفات{% endblock %}
+
+{% block content %}
+<!-- قسم الترحيب -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6" data-aos="fade-right">
+                <h1 class="display-4 fw-bold mb-4">أدر ملفاتك بذكاء وسهولة</h1>
+                <p class="lead mb-4">منصة متكاملة لتخزين وتنظيم ومشاركة ملفاتك بطريقة آمنة وسهلة الاستخدام</p>
+                <div class="d-flex flex-wrap gap-3 mb-4">
+                    {% if g.user %}
+                    <a href="{{ url_for('explore_files') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-search me-2"></i> استكشاف الملفات
+                    </a>
+                    <a href="{{ url_for('my_files') }}" class="btn btn-light btn-lg">
+                        <i class="bi bi-folder me-2"></i> ملفاتي
+                    </a>
+                    <a href="{{ url_for('upload_file') }}" class="btn btn-accent btn-lg">
+                        <i class="bi bi-upload me-2"></i> رفع ملف جديد
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> تسجيل الدخول
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-light btn-lg">
+                        <i class="bi bi-info-circle me-2"></i> معرفة المزيد
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="d-flex me-4">
+                        <div class="text-success me-2"><i class="bi bi-check-circle-fill"></i></div>
+                        <div>تخزين آمن</div>
+                    </div>
+                    <div class="d-flex me-4">
+                        <div class="text-success me-2"><i class="bi bi-check-circle-fill"></i></div>
+                        <div>سهولة الوصول</div>
+                    </div>
+                    <div class="d-flex">
+                        <div class="text-success me-2"><i class="bi bi-check-circle-fill"></i></div>
+                        <div>تنظيم ذكي</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block" data-aos="fade-left" data-aos-delay="200">
+                <div class="position-relative">
+                    <div class="hero-image-container text-center">
+                        <img src="{{ url_for('static', filename='img/hero-image.svg') }}" alt="نظام إدارة الملفات" class="img-fluid" onerror="this.src='https://via.placeholder.com/600x400?text=نظام+إدارة+الملفات'">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- قسم المميزات -->
+<div class="container mt-5">
+    <h2 class="text-center mb-5">مميزات نظام إدارة الملفات</h2>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-cloud-upload display-4 text-primary mb-3"></i>
+                    <h3>رفع وتخزين الملفات</h3>
+                    <p class="text-muted">قم برفع وتخزين ملفاتك بسهولة وأمان، مع دعم لمختلف أنواع الملفات.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-search display-4 text-success mb-3"></i>
+                    <h3>بحث وفلترة متقدمة</h3>
+                    <p class="text-muted">ابحث عن ملفاتك بسرعة باستخدام خيارات البحث والفلترة المتقدمة.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-shield-check display-4 text-info mb-3"></i>
+                    <h3>أمان وخصوصية</h3>
+                    <p class="text-muted">نظام آمن مع إدارة للمستخدمين وصلاحيات للوصول إلى الملفات.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- قسم كيفية الاستخدام -->
+<div class="container mt-5">
+    <h2 class="text-center mb-5">كيفية استخدام النظام</h2>
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="bg-light rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                        <span class="h3 mb-0">1</span>
+                    </div>
+                    <h4>إنشاء حساب</h4>
+                    <p class="text-muted">قم بإنشاء حساب جديد للوصول إلى جميع ميزات النظام.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="bg-light rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                        <span class="h3 mb-0">2</span>
+                    </div>
+                    <h4>رفع الملفات</h4>
+                    <p class="text-muted">قم برفع ملفاتك بسهولة مع إضافة وصف لكل ملف.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="bg-light rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                        <span class="h3 mb-0">3</span>
+                    </div>
+                    <h4>تنظيم وإدارة</h4>
+                    <p class="text-muted">استخدم أدوات البحث والفلترة لتنظيم وإدارة ملفاتك بكفاءة.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="bg-light rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                        <span class="h3 mb-0">4</span>
+                    </div>
+                    <h4>المشاركة والتنزيل</h4>
+                    <p class="text-muted">قم بتنزيل ملفاتك في أي وقت ومن أي مكان.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

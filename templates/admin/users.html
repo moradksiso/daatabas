@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}إدارة المستخدمين - نظام إدارة الملفات{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-people"></i> إدارة المستخدمين</h2>
+            <div>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary me-2">
+                    <i class="bi bi-speedometer2"></i> لوحة التحكم
+                </a>
+                <a href="{{ url_for('admin_add_user') }}" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> إضافة مستخدم
+                </a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>اسم المستخدم</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>نوع الحساب</th>
+                                <th>الحالة</th>
+                                <th>تاريخ التسجيل</th>
+                                <th>آخر تسجيل دخول</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{% if user.is_admin %}<span class="badge bg-primary">مشرف</span>{% else %}<span class="badge bg-secondary">مستخدم</span>{% endif %}</td>
+                                <td>{% if user.is_active %}<span class="badge bg-success">نشط</span>{% else %}<span class="badge bg-danger">معطل</span>{% endif %}</td>
+                                <td>{{ user.formatted_created_at }}</td>
+                                <td>{{ user.formatted_last_login }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> تعديل
+                                        </a>
+                                        {% if user.id != g.user.id %}
+                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">
+                                            <i class="bi bi-trash"></i> حذف
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <!-- نافذة تأكيد الحذف -->
+                            {% if user.id != g.user.id %}
+                            <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">تأكيد الحذف</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>هل أنت متأكد من حذف المستخدم "{{ user.username }}"؟</p>
+                                            <p class="text-danger">سيتم حذف جميع ملفات هذا المستخدم أيضًا!</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                            <form action="{{ url_for('admin_delete_user', user_id=user.id) }}" method="post">
+                                                <button type="submit" class="btn btn-danger">حذف</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

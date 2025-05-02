@@ -1,0 +1,45 @@
+# بيئة Python الافتراضية
+venv/
+env/
+.env/
+
+# ملفات قاعدة البيانات
+*.db
+*.sqlite
+*.sqlite3
+
+# مجلد التحميلات (نحتفظ بالمجلد نفسه ولكن ليس بمحتوياته)
+uploads/*
+!uploads/.gitkeep
+
+# ملفات Python المؤقتة
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ملفات النظام
+.DS_Store
+Thumbs.db
+
+# ملفات المحرر
+.idea/
+.vscode/
+*.swp
+*.swo
